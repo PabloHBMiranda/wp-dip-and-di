@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WordPress DIP + DI — Arquitetura para Temas Escaláveis</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+<style>
+    :root {
+        --accent: #7c3aed;
+        --accent-light: #a78bfa;
+        --green: #10b981;
+        --red: #ef4444;
+        --yellow: #f59e0b;
+        --gray: #6b7280;
+    }
+
+    .reveal { font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    .reveal h1, .reveal h2, .reveal h3 {
+        text-transform: none;
+        letter-spacing: -0.02em;
+    }
+
+    .reveal h1 { font-size: 2.2em; font-weight: 800; }
+    .reveal h2 { font-size: 1.5em; font-weight: 700; color: var(--accent-light); }
+    .reveal h3 { font-size: 1.1em; font-weight: 600; color: #d1d5db; }
+
+    .reveal pre { box-shadow: none; width: 100%; }
+    .reveal code { font-family: 'Fira Code', 'Cascadia Code', monospace; }
+    .reveal pre code { font-size: 0.72em; line-height: 1.5; border-radius: 8px; padding: 1rem; }
+
+    .tag {
+        display: inline-block;
+        padding: 0.15em 0.6em;
+        border-radius: 4px;
+        font-size: 0.55em;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        vertical-align: middle;
+        margin-left: 0.5em;
+    }
+    .tag-poc   { background: var(--yellow); color: #000; }
+    .tag-today { background: var(--red);    color: #fff; }
+    .tag-prop  { background: var(--green);  color: #000; }
+
+    table { font-size: 0.72em; border-collapse: collapse; width: 100%; }
+    th { background: var(--accent); padding: 0.5em 0.8em; font-weight: 700; }
+    td { padding: 0.45em 0.8em; border-bottom: 1px solid #374151; }
+    tr:nth-child(even) td { background: rgba(255,255,255,0.04); }
+
+    .cols { display: grid; gap: 1.5rem; }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .card {
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 1rem 1.2rem;
+    }
+
+    .card-red    { border-color: var(--red);    background: rgba(239,68,68,.08); }
+    .card-green  { border-color: var(--green);  background: rgba(16,185,129,.08); }
+    .card-purple { border-color: var(--accent); background: rgba(124,58,237,.08); }
+    .card-yellow { border-color: var(--yellow); background: rgba(245,158,11,.08); }
+
+    .card h3 { margin: 0 0 0.5em; font-size: 0.95em; }
+    .card ul  { margin: 0; padding-left: 1.1em; font-size: 0.78em; line-height: 1.7; }
+
+    .number-big {
+        font-size: 3em;
+        font-weight: 900;
+        color: var(--accent-light);
+        line-height: 1;
+        display: block;
+    }
+
+    .check { color: var(--green); }
+    .cross { color: var(--red); }
+    .warn  { color: var(--yellow); }
+
+    .adv-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        font-size: 0.6em;
+    }
+    .adv-item {
+        background: rgba(124,58,237,.15);
+        border: 1px solid rgba(124,58,237,.3);
+        border-radius: 6px;
+        padding: 0.5em 0.6em;
+        line-height: 1.3;
+    }
+    .adv-num {
+        font-weight: 800;
+        color: var(--accent-light);
+        display: block;
+        font-size: 1.1em;
+    }
+
+    .highlight-box {
+        background: rgba(124,58,237,.2);
+        border-left: 4px solid var(--accent-light);
+        border-radius: 0 8px 8px 0;
+        padding: 0.8em 1.2em;
+        font-size: 0.85em;
+        font-style: italic;
+        margin-top: 1rem;
+    }
+
+    .vs-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 0.5rem 0;
+    }
+    .vs-divider::before,
+    .vs-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255,255,255,0.15);
+    }
+    .vs-badge {
+        background: var(--accent);
+        color: white;
+        font-weight: 800;
+        font-size: 0.7em;
+        padding: 0.2em 0.6em;
+        border-radius: 20px;
+    }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ─── CAPA ──────────────────────────────────────────────────────────────── -->
+<section>
+    <div style="margin-bottom:0.5em">
+        <span style="font-size:0.55em;background:var(--accent);padding:0.3em 0.8em;border-radius:20px;font-weight:700">
+            PROVA DE CONCEITO
+        </span>
+    </div>
+    <h1>WordPress<br><span style="color:var(--accent-light)">DIP + DI</span></h1>
+    <p style="color:#9ca3af;font-size:0.8em;margin-top:1rem">
+        Arquitetura para temas escaláveis com<br>
+        Dependency Inversion Principle e Dependency Injection
+    </p>
+</section>
+
+<!-- ─── O PROBLEMA HOJE ───────────────────────────────────────────────────── -->
+<section>
+    <h2>O problema hoje</h2>
+    <div class="cols cols-2" style="margin-top:1rem">
+        <div class="card card-red">
+            <h3>🔴 Modelo de forks</h3>
+            <ul>
+                <li>core-theme/ ← base</li>
+                <li>client-a-theme/ ← fork</li>
+                <li>client-b-theme/ ← fork</li>
+                <li>client-c-theme/ ← fork</li>
+            </ul>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.75em">
+            <div>🐛 Bug no core → replica em <strong>N lugares</strong></div>
+            <div>⬆️ WordPress atualiza → testa <strong>N temas</strong></div>
+            <div>✨ Feature nova → decide quais forks merecem</div>
+            <div>📦 Cada fork = <strong>tema inteiro</strong> para 5% de diferença</div>
+        </div>
+    </div>
+    <div class="highlight-box">
+        Você não está mantendo um produto.<br>Está mantendo N cópias do mesmo produto.
+    </div>
+</section>
+
+<!-- ─── A PROPOSTA ────────────────────────────────────────────────────────── -->
+<section>
+    <h2>A proposta</h2>
+    <div class="cols cols-2" style="margin-top:1rem">
+        <div class="card card-green">
+            <h3>🟢 Core + Plugins</h3>
+            <ul>
+                <li>core-theme/ ← 1 lugar</li>
+                <li>client-a-plugin/ ← 5–10 arquivos</li>
+                <li>client-b-plugin/ ← 5–10 arquivos</li>
+                <li>client-c-plugin/ ← 5–10 arquivos</li>
+            </ul>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.75em">
+            <div>🐛 Bug no core → <strong>todos recebem</strong> na próxima atualização</div>
+            <div>⬆️ WordPress atualiza → testa <strong>1 tema</strong></div>
+            <div>✨ Feature nova → disponível para todos</div>
+            <div>📦 Cada plugin = <strong>5% do código</strong> para 5% de diferença</div>
+        </div>
+    </div>
+    <div class="highlight-box">
+        O fork carrega o peso do tema inteiro para personalizar 5% do comportamento.<br>
+        O plugin carrega 5% do código para personalizar 5% do comportamento.
+    </div>
+</section>
+
+<!-- ─── COMO FUNCIONA ─────────────────────────────────────────────────────── -->
+<section>
+    <h2>Como funciona — Contratos</h2>
+    <p style="font-size:0.7em;color:#9ca3af">O core define <strong>o que</strong> pode ser implementado. Nunca <strong>como</strong>.</p>
+    <table style="margin-top:0.8rem">
+        <tr>
+            <th>Interface</th>
+            <th>Responsabilidade</th>
+        </tr>
+        <tr><td><code>NewsRepositoryInterface</code></td><td>De onde vêm os dados (DB, RSS, REST API…)</td></tr>
+        <tr><td><code>NewsServiceInterface</code></td><td>Como os dados são orquestrados</td></tr>
+        <tr><td><code>NewsRendererInterface</code></td><td>Como os dados viram HTML</td></tr>
+        <tr><td><code>NewsQueryBuilderInterface</code></td><td>Como montar queries no WordPress</td></tr>
+        <tr><td><code>ServiceProviderInterface</code></td><td>Como um plugin se registra no sistema</td></tr>
+    </table>
+</section>
+
+<!-- ─── ESTRATÉGIAS ───────────────────────────────────────────────────────── -->
+<section>
+    <h2>Estratégias — esta POC</h2>
+    <table style="margin-top:1rem">
+        <tr>
+            <th>Alias</th>
+            <th>Plugin</th>
+            <th>Fonte de dados</th>
+            <th>HTML gerado</th>
+        </tr>
+        <tr>
+            <td><code>default</code></td>
+            <td>Core Theme</td>
+            <td>WordPress DB (WP_Query)</td>
+            <td>Grid de cards</td>
+        </tr>
+        <tr>
+            <td><code>g1</code></td>
+            <td>g1-news</td>
+            <td>RSS G1/Globo</td>
+            <td>Hero editorial + grade</td>
+        </tr>
+        <tr>
+            <td><code>bbc</code></td>
+            <td>bbc-news</td>
+            <td>RSS BBC News</td>
+            <td>Header escuro + top story</td>
+        </tr>
+        <tr>
+            <td><code>portal-go</code></td>
+            <td>portal-go-news</td>
+            <td>REST API Portal GO</td>
+            <td>Featured com overlay</td>
+        </tr>
+    </table>
+    <div class="highlight-box" style="margin-top:0.8rem">
+        Cada estratégia implementa os contratos do core. O tema não sabe qual está ativa.
+    </div>
+</section>
+
+<!-- ─── SEM IF/ELSE ───────────────────────────────────────────────────────── -->
+<section>
+    <h2>Resolução sem if/else</h2>
+    <pre><code class="language-php">// NewsListBlock::render() — o bloco não conhece nenhuma estratégia concreta
+public function render(array $attributes): string
+{
+    $alias = $attributes['strategy']; // ex: "g1"
+
+    // O registry resolve a classe concreta certa — sem nenhum condicional
+    $service  = $this->registry->resolve($alias, NewsServiceInterface::class);
+    $renderer = $this->registry->resolve($alias, NewsRendererInterface::class);
+
+    return $renderer->render($service->getNews($attributes), $attributes);
+}</code></pre>
+    <div class="cols cols-2" style="margin-top:0.8rem;font-size:0.72em">
+        <div class="card card-red">
+            <h3>❌ Com if/else</h3>
+            <ul>
+                <li>Adicionar estratégia = editar o bloco</li>
+                <li>N estratégias = N condicionais no core</li>
+                <li>Violação do Open/Closed Principle</li>
+            </ul>
+        </div>
+        <div class="card card-green">
+            <h3>✅ Com registry + container</h3>
+            <ul>
+                <li>Adicionar estratégia = novo plugin</li>
+                <li>N estratégias = 0 condicionais no core</li>
+                <li>Core nunca muda para adicionar behavior</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- ─── COMO UM PLUGIN SE REGISTRA ───────────────────────────────────────── -->
+<section>
+    <h2>Como um plugin se registra</h2>
+    <pre><code class="language-php">// client-a-plugin.php — ponto de entrada do plugin
+add_action('core_theme_register_providers', function (Application $app): void {
+    $app->registerProvider(new ClientAServiceProvider());
+});
+
+// ClientAServiceProvider.php
+public function boot(NewsBlockRegistry $registry): void
+{
+    $strategy = new StrategyStack('client-a', 'Client A');
+
+    $strategy
+        ->bind(NewsRepositoryInterface::class, ClientANewsRepository::class)
+        ->bind(NewsRendererInterface::class,   ClientANewsRenderer::class);
+    //  ↑ só sobrescreve o que precisa — o resto usa o fallback do "default"
+
+    $registry->register($strategy);
+}</code></pre>
+    <p style="font-size:0.65em;color:#9ca3af;margin-top:0.5rem">
+        O core nunca é tocado. O plugin implementa os contratos e se anuncia pelo hook.
+    </p>
+</section>
+
+<!-- ─── DIP+DI vs FILTROS ─────────────────────────────────────────────────── -->
+<section>
+    <h2>DIP+DI vs Filtros de Bloco</h2>
+    <div class="vs-divider" style="margin:0.8rem 0"><span class="vs-badge">VS</span></div>
+    <div class="cols cols-2">
+        <div class="card card-yellow">
+            <h3>⚡ Filtros ganham quando…</h3>
+            <ul>
+                <li>Curva de aprendizado é crítica</li>
+                <li>Adoção em tema existente hoje</li>
+                <li>Plugins de terceiros precisam integrar</li>
+                <li>Multisite com blogs isolados</li>
+                <li>Time pequeno sem experiência em DI</li>
+            </ul>
+        </div>
+        <div class="card card-purple">
+            <h3>🏆 DIP+DI ganha quando…</h3>
+            <ul>
+                <li>Você mantém N personalizações</li>
+                <li>Contratos são estáveis e documentados</li>
+                <li>Testabilidade é requisito</li>
+                <li>Rastreabilidade em runtime é necessária</li>
+                <li><strong>Você é o dev dos dois lados</strong></li>
+            </ul>
+        </div>
+    </div>
+    <div class="highlight-box">
+        Filtros: <em>"você pode se pendurar aqui"</em><br>
+        Contratos: <em>"você pode substituir isso aqui"</em>
+    </div>
+</section>
+
+<!-- ─── 20 VANTAGENS ──────────────────────────────────────────────────────── -->
+<section>
+    <h2>20 vantagens do modelo</h2>
+    <div class="adv-grid" style="margin-top:0.8rem">
+        <div class="adv-item"><span class="adv-num">01</span>Atualização sem regressão</div>
+        <div class="adv-item"><span class="adv-num">02</span>Extensão sem acesso ao fonte</div>
+        <div class="adv-item"><span class="adv-num">03</span>Múltiplos fornecedores sem conflito</div>
+        <div class="adv-item"><span class="adv-num">04</span>Falha explícita em boot</div>
+        <div class="adv-item"><span class="adv-num">05</span>Testabilidade por camada</div>
+        <div class="adv-item"><span class="adv-num">06</span>Onboarding com escopo cirúrgico</div>
+        <div class="adv-item"><span class="adv-num">07</span>Precificação por capacidade</div>
+        <div class="adv-item"><span class="adv-num">08</span>Estratégias parciais (fallback)</div>
+        <div class="adv-item"><span class="adv-num">09</span>Rastreabilidade em runtime</div>
+        <div class="adv-item"><span class="adv-num">10</span>Autodocumentação por tipo</div>
+        <div class="adv-item"><span class="adv-num">11</span>Refatoração interna sem cerimônia</div>
+        <div class="adv-item"><span class="adv-num">12</span>Análise estática (PHPStan)</div>
+        <div class="adv-item"><span class="adv-num">13</span>Fallback previsível sem prioridade</div>
+        <div class="adv-item"><span class="adv-num">14</span>Proteção contra acoplamento concreto</div>
+        <div class="adv-item"><span class="adv-num">15</span>Evolução por adição de arquivos</div>
+        <div class="adv-item"><span class="adv-num">16</span>Contrato como SLA técnico</div>
+        <div class="adv-item"><span class="adv-num">17</span>DI em profundidade (autowiring)</div>
+        <div class="adv-item"><span class="adv-num">18</span>Lógica portável (sem WP puro)</div>
+        <div class="adv-item"><span class="adv-num">19</span>IDE completa (autocompletar)</div>
+        <div class="adv-item"><span class="adv-num">20</span>Core não cresce com N clientes</div>
+    </div>
+</section>
+
+<!-- ─── DESVANTAGENS REAIS ────────────────────────────────────────────────── -->
+<section>
+    <h2>Desvantagens reais <span style="font-size:0.6em;color:#9ca3af">no seu cenário específico</span></h2>
+    <p style="font-size:0.7em;color:#9ca3af;margin-bottom:1rem">
+        Das 20 possíveis, apenas <strong style="color:var(--yellow)">3 se aplicam</strong> quando você é o dev dos dois lados.
+    </p>
+    <div class="cols cols-3">
+        <div class="card card-yellow">
+            <h3>⚡ Cold start</h3>
+            <ul>
+                <li>Container bootstrapa a cada requisição PHP</li>
+                <li>Custo fixo e pequeno</li>
+                <li>Relevante em alta concorrência</li>
+            </ul>
+        </div>
+        <div class="card card-yellow">
+            <h3>🎯 Granularidade</h3>
+            <ul>
+                <li>Errar os contratos no início custa refatoração</li>
+                <li>Poucos = inflexível</li>
+                <li>Muitos = complexidade sem retorno</li>
+            </ul>
+        </div>
+        <div class="card card-yellow">
+            <h3>🚀 Deploy</h3>
+            <ul>
+                <li>Atualizar plugin requer <code>composer dump-autoload</code> na raiz</li>
+                <li>Atrito operacional dependendo do pipeline</li>
+                <li>Resolvível com automação</li>
+            </ul>
+        </div>
+    </div>
+    <div class="highlight-box" style="margin-top:0.8rem">
+        As outras 17 desvantagens assumiam que <em>clientes</em> iam estender o sistema.<br>
+        Como você é o desenvolvedor dos dois lados, elas não se aplicam.
+    </div>
+</section>
+
+<!-- ─── COMPARAÇÃO FINAL ──────────────────────────────────────────────────── -->
+<section>
+    <h2>Comparação direta</h2>
+    <table style="margin-top:0.8rem">
+        <tr>
+            <th>Critério</th>
+            <th>Fork (hoje)</th>
+            <th>Plugin + Contratos</th>
+        </tr>
+        <tr>
+            <td>Tamanho da personalização</td>
+            <td class="cross">Tema inteiro</td>
+            <td class="check">5–10 arquivos</td>
+        </tr>
+        <tr>
+            <td>Bug fix no core</td>
+            <td class="cross">Manual em N lugares</td>
+            <td class="check">Automático para todos</td>
+        </tr>
+        <tr>
+            <td>Feature nova</td>
+            <td class="cross">Decisão por fork</td>
+            <td class="check">Disponível para todos</td>
+        </tr>
+        <tr>
+            <td>Teste</td>
+            <td class="cross">N ambientes completos</td>
+            <td class="check">1 core + mocks isolados</td>
+        </tr>
+        <tr>
+            <td>Rastreabilidade</td>
+            <td class="cross">Diff entre forks</td>
+            <td class="check">Registry em runtime</td>
+        </tr>
+        <tr>
+            <td>Atualização do WordPress</td>
+            <td class="cross">Testa N temas</td>
+            <td class="check">Testa 1 tema</td>
+        </tr>
+        <tr>
+            <td>Complexidade cresce com clientes</td>
+            <td class="cross">Linear</td>
+            <td class="check">Constante no core</td>
+        </tr>
+    </table>
+</section>
+
+<!-- ─── CONCLUSÃO ─────────────────────────────────────────────────────────── -->
+<section>
+    <h2>Conclusão</h2>
+    <div class="cols cols-2" style="margin-top:1rem">
+        <div style="text-align:center">
+            <span class="number-big">1</span>
+            <p style="font-size:0.75em;color:#9ca3af">tema base para manter</p>
+        </div>
+        <div style="text-align:center">
+            <span class="number-big" style="color:var(--green)">N</span>
+            <p style="font-size:0.75em;color:#9ca3af">plugins focados, isolados e testáveis</p>
+        </div>
+    </div>
+    <div class="highlight-box" style="margin-top:1.5rem;font-size:0.9em">
+        A arquitetura certa não é a mais elegante —<br>
+        é a que resolve o problema real sem multiplicar a superfície de manutenção.<br><br>
+        <strong>Este modelo faz exatamente isso.</strong>
+    </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/notes/notes.js"></script>
+<script>
+Reveal.initialize({
+    hash:            true,
+    slideNumber:     'c/t',
+    transition:      'slide',
+    transitionSpeed: 'fast',
+    controls:        true,
+    progress:        true,
+    center:          true,
+    plugins:         [RevealHighlight, RevealNotes],
+    highlight: {
+        highlightOnLoad: true,
+    },
+});
+</script>
+</body>
+</html>
