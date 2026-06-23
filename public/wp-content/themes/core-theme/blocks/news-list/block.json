@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/block.json",
+    "apiVersion": 3,
+    "name": "core-theme/news-list",
+    "title": "News List",
+    "description": "Displays a list of news with swappable strategy implementations.",
+    "category": "widgets",
+    "icon": "list-view",
+    "keywords": ["news", "list", "posts"],
+    "attributes": {
+        "strategy": {
+            "type": "string",
+            "default": "default"
+        },
+        "postsPerPage": {
+            "type": "number",
+            "default": 6
+        }
+    },
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"]
+    },
+    "textdomain": "core-theme",
+    "editorScript": "file:./index.js",
+    "style": "file:./style.css"
+}

@@ -1,0 +1,64 @@
+{
+    "$schema": "https://schemas.wp.org/trunk/theme.json",
+    "version": 3,
+    "settings": {
+        "appearanceTools": true,
+        "layout": {
+            "contentSize": "800px",
+            "wideSize": "1200px"
+        },
+        "color": {
+            "palette": [
+                { "slug": "primary",    "color": "#1a1a2e", "name": "Primary" },
+                { "slug": "secondary",  "color": "#16213e", "name": "Secondary" },
+                { "slug": "accent",     "color": "#0f3460", "name": "Accent" },
+                { "slug": "background", "color": "#ffffff", "name": "Background" },
+                { "slug": "foreground", "color": "#1a1a1a", "name": "Foreground" }
+            ]
+        },
+        "typography": {
+            "fontFamilies": [
+                {
+                    "slug": "system",
+                    "name": "System Font",
+                    "fontFamily": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                }
+            ],
+            "fluid": true
+        },
+        "spacing": {
+            "spacingScale": {
+                "steps": 7
+            }
+        },
+        "blocks": {
+            "core-theme/news-list": {
+                "color": {
+                    "text":       true,
+                    "background": true
+                }
+            }
+        }
+    },
+    "styles": {
+        "color": {
+            "background": "#ffffff",
+            "text":       "#1a1a1a"
+        },
+        "typography": {
+            "fontFamily": "var(--wp--preset--font-family--system)",
+            "fontSize":   "1rem",
+            "lineHeight": "1.6"
+        },
+        "blocks": {
+            "core-theme/news-list": {
+                "spacing": {
+                    "padding": {
+                        "top":    "var(--wp--preset--spacing--40)",
+                        "bottom": "var(--wp--preset--spacing--40)"
+                    }
+                }
+            }
+        }
+    }
+}

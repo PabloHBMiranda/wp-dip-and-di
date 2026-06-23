@@ -1,0 +1,39 @@
+# Ambiente
+.env
+
+# Dependências PHP
+vendor/
+public/wp-content/themes/core-theme/vendor/
+
+# WordPress core (instalado via WP-CLI em runtime)
+### Wordpress
+/public/*
+!/public/wp-content/
+/public/wp-content/*
+!/public/wp-content/languages/
+!/public/wp-content/plugins/
+!/public/wp-content/themes/
+
+## Plugins
+/public/wp-content/plugins/*
+!/public/wp-content/plugins/portal-go-news/
+!/public/wp-content/plugins/g1-news/
+!/public/wp-content/plugins/bbc-news/
+!/public/wp-content/plugins/index.php
+
+/public/wp-content/themes/*
+!/public/wp-content/themes/core-theme/
+!/public/wp-content/themes/index.php
+
+# Dados persistentes do Docker
+data/
+
+# Build JS
+public/wp-content/themes/core-theme/blocks/*/build/
+node_modules/
+
+# macOS / IDE
+.DS_Store
+.idea/
+.vscode/
+*.swp
